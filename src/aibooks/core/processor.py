@@ -36,10 +36,19 @@ class DocumentProcessor:
 
         # Initialize components
         self.format_detector = FormatDetector()
-        self.docling_parser = DoclingParser(
-            enable_ocr=self.config.processing.enable_ocr,
-            enable_vision=self.config.processing.enable_docling_vision,
-        )
+
+        # Try to initialize Docling parser (may not be available)
+        try:
+            self.docling_parser = DoclingParser(
+                enable_ocr=self.config.processing.enable_ocr,
+                enable_vision=self.config.processing.enable_docling_vision,
+            )
+            self.docling_available = True
+        except ImportError as e:
+            logger.warning(f"Docling not available: {e}")
+            self.docling_parser = None
+            self.docling_available = False
+
         self.calibre_extractor = CalibreMetadataExtractor()
         self.metadata_fusion = MetadataFusion()
         self.text_cleaner = TextCleaner()
@@ -95,6 +104,10 @@ class DocumentProcessor:
             logger.info(f"Parsing strategy: {strategy['primary_method']}")
 
             # Step 4: Parse document with Docling
+            if not self.docling_available:
+                logger.error("Docling parser not available - cannot process document")
+                return None
+
             parsed_doc = self.docling_parser.parse(file_path)
 
             if not parsed_doc.success:

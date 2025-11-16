@@ -4,7 +4,13 @@ import mimetypes
 from enum import Enum
 from pathlib import Path
 from typing import Optional
-import magic
+
+# Optional magic library for better MIME detection
+try:
+    import magic
+    MAGIC_AVAILABLE = True
+except ImportError:
+    MAGIC_AVAILABLE = False
 
 
 class DocumentFormat(str, Enum):
@@ -93,10 +99,16 @@ class FormatDetector:
         Returns:
             Detected DocumentFormat
         """
-        try:
-            # Try python-magic first (more accurate)
-            mime_type = magic.from_file(str(file_path), mime=True)
-        except Exception:
+        mime_type = None
+
+        if MAGIC_AVAILABLE:
+            try:
+                # Try python-magic first (more accurate)
+                mime_type = magic.from_file(str(file_path), mime=True)
+            except Exception:
+                pass
+
+        if not mime_type:
             # Fallback to mimetypes
             mime_type, _ = mimetypes.guess_type(str(file_path))
 

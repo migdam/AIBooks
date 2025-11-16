@@ -2,8 +2,19 @@
 
 import re
 from typing import List, Optional
-import ftfy
-from unidecode import unidecode
+
+# Optional imports
+try:
+    import ftfy
+    FTFY_AVAILABLE = True
+except ImportError:
+    FTFY_AVAILABLE = False
+
+try:
+    from unidecode import unidecode
+    UNIDECODE_AVAILABLE = True
+except ImportError:
+    UNIDECODE_AVAILABLE = False
 
 
 class TextCleaner:
@@ -41,8 +52,9 @@ class TextCleaner:
         Returns:
             Normalized text
         """
-        # Fix mojibake and encoding issues
-        text = ftfy.fix_text(text)
+        # Fix mojibake and encoding issues (if ftfy available)
+        if FTFY_AVAILABLE:
+            text = ftfy.fix_text(text)
         return text
 
     def normalize_quotes(self, text: str) -> str:
