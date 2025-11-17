@@ -238,6 +238,103 @@ def evolve(
 
 
 @app.command()
+def providers():
+    """Show available LLM providers and configuration."""
+    setup_logging()
+
+    console.print("[bold blue]LLM Provider Information[/bold blue]\n")
+
+    from .core.llm_manager import LLMManager
+    from .core.llm_provider import LLMFactory
+    from .db.database import get_db
+
+    # Get available providers
+    available = LLMFactory.get_available_providers()
+
+    console.print("[bold]Available Providers:[/bold]")
+    for provider in available:
+        console.print(f"  ✅ {provider}")
+
+    if not available:
+        console.print("  ⚠️  No providers available")
+        console.print("\n[yellow]Install providers:[/yellow]")
+        console.print("  • OpenAI: pip install openai")
+        console.print("  • Anthropic: pip install anthropic")
+        console.print("  • Groq: pip install groq")
+        console.print("  • Ollama: curl -fsSL https://ollama.ai/install.sh | sh")
+        return
+
+    # Get configuration
+    db = get_db()
+    with db.session_scope() as session:
+        from .core.cost_tracker import CostTracker
+        manager = LLMManager(CostTracker(session))
+
+        info = manager.get_provider_info()
+
+        console.print("\n[bold]Configured:[/bold]")
+        console.print(f"  Default: {info['configured']['default']}")
+        console.print(f"  Advanced: {info['configured']['advanced']}")
+        console.print(f"  Free: {info['configured']['free']}")
+
+        console.print("\n[bold]Strategy:[/bold]")
+        console.print(f"  Use free for simple: {info['strategy']['use_free_for_simple']}")
+        console.print(f"  Cost threshold: ${info['strategy']['cost_threshold']}")
+
+
+@app.command()
+def test_llm(
+    provider: str = typer.Option("ollama", help="Provider to test (openai, anthropic, ollama, groq)"),
+    model: str = typer.Option("llama3.1:8b", help="Model to test"),
+):
+    """Test LLM provider connection."""
+    setup_logging()
+
+    console.print(f"[bold blue]Testing {provider}:{model}...[/bold blue]\n")
+
+    from .core.llm_provider import LLMFactory
+
+    try:
+        # Get config
+        from .core.config import get_config
+        config = get_config()
+
+        # Get API key
+        api_key = None
+        if provider == "openai":
+            api_key = config.llm.openai_api_key
+        elif provider == "anthropic":
+            api_key = config.llm.anthropic_api_key
+        elif provider == "groq":
+            api_key = config.llm.groq_api_key
+
+        # Create provider
+        llm = LLMFactory.create_provider(provider, model, api_key=api_key)
+
+        if not llm.is_available():
+            console.print(f"[red]❌ Provider {provider} not available[/red]")
+            return
+
+        console.print("✅ Provider available")
+        console.print("Sending test prompt...")
+
+        # Test completion
+        response = llm.complete(
+            prompt="Say 'Hello from AIBooks' and nothing else.",
+            temperature=0.1,
+            max_tokens=50,
+        )
+
+        console.print(f"\n[green]✅ Success![/green]")
+        console.print(f"Response: {response.content}")
+        console.print(f"Tokens: {response.tokens_in} in, {response.tokens_out} out")
+        console.print(f"Cost: ${response.cost:.4f}")
+
+    except Exception as e:
+        console.print(f"[red]❌ Error: {e}[/red]")
+
+
+@app.command()
 def version():
     """Show AIBooks version."""
     from . import __version__
