@@ -10,10 +10,23 @@ AIBooks is a **highly accurate, self-improving, agentic pipeline** that converts
 
 ### Key Features
 
+🆓 **FREE Local LLM Support (Ollama)**
+- Run powerful AI models **completely free** on your machine!
+- No API keys required, fully private
+- Llama 3.1, Mistral, Phi3, and more
+- **50-100% cost reduction** with intelligent provider switching
+
 ✨ **State-of-the-Art Parsing**
 - Docling-based parsing with OCR fallback
 - Multi-column detection, table extraction, figure extraction
 - Supports PDF, EPUB, MOBI, AZW3, DOCX, RTF, TXT, HTML, and images
+
+🎯 **Multi-Provider LLM Support**
+- **OpenAI** (GPT-4o, GPT-4o-mini, GPT-3.5-turbo)
+- **Anthropic** (Claude 3.5 Sonnet, Claude 3 Opus, Claude 3 Haiku)
+- **Groq** (Fast inference, very cheap)
+- **Ollama** (Local models, FREE!)
+- Automatic provider selection by task complexity
 
 🤖 **6 Intelligent Agents**
 - **Format Strategist** - Selects optimal parsing strategy
@@ -32,6 +45,7 @@ AIBooks is a **highly accurate, self-improving, agentic pipeline** that converts
 💰 **Cost & Time Tracking**
 - Every LLM call logged with cost and duration
 - Daily budget management
+- Automatic switch to free models when budget tight
 - Cost optimization suggestions
 
 🗄️ **SQLite Knowledge Base**
@@ -58,22 +72,40 @@ cd AIBooks
 # Install dependencies
 pip install -e .
 
-# Install Calibre (for metadata extraction)
+# Option A: FREE Setup (Ollama - no API keys!)
+curl -fsSL https://ollama.ai/install.sh | sh
+ollama pull llama3.1:8b
+
+# Option B: Paid LLMs (OpenAI, Anthropic, Groq)
+# Get API keys from providers
+# Add to .env file
+
+# Optional: Install Calibre (for metadata extraction)
 # Ubuntu/Debian:
 sudo apt-get install calibre
 
 # macOS:
 brew install calibre
 
-# Copy and configure environment
+# Configure
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your choices
 ```
 
 ### Initialize Database
 
 ```bash
 aibooks init
+```
+
+### Check Available Providers
+
+```bash
+# See what LLM providers you have configured
+aibooks providers
+
+# Test a provider
+aibooks test-llm --provider ollama --model llama3.1:8b
 ```
 
 ### Ingest Documents
