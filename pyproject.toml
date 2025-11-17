@@ -44,7 +44,9 @@ dependencies = [
     # LLM & AI
     "openai>=1.0.0",
     "anthropic>=0.18.0",
+    "groq>=0.4.0",
     "tiktoken>=0.5.0",
+    "requests>=2.31.0",  # For Ollama
 
     # Utilities
     "pydantic>=2.5.0",

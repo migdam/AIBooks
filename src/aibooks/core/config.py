@@ -13,14 +13,39 @@ load_dotenv()
 class LLMConfig(BaseModel):
     """LLM configuration settings."""
 
+    # API Keys
     openai_api_key: str = Field(default="")
     anthropic_api_key: str = Field(default="")
+    groq_api_key: str = Field(default="")
+
+    # Provider selection (openai, anthropic, ollama, groq)
+    default_provider: str = Field(default="openai")
+    advanced_provider: str = Field(default="openai")  # For complex tasks
+    free_provider: str = Field(default="ollama")  # For simple tasks
+
+    # Model selection by task type
     default_model: str = Field(default="gpt-4o-mini")
     metadata_model: str = Field(default="gpt-4o-mini")
     cleanup_model: str = Field(default="gpt-4o-mini")
     agent_model: str = Field(default="gpt-4o")
+
+    # Free models (Ollama local models)
+    free_model: str = Field(default="llama3.1:8b")  # Local Ollama model
+    simple_task_model: str = Field(default="llama3.1:8b")  # For simple tasks
+
+    # Advanced models for complex tasks
+    advanced_model: str = Field(default="gpt-4o")  # Or claude-3-5-sonnet
+
+    # Ollama configuration
+    ollama_base_url: str = Field(default="http://localhost:11434")
+
+    # Model parameters
     temperature: float = Field(default=0.1, ge=0.0, le=2.0)
     max_tokens: int = Field(default=4000, ge=1)
+
+    # Strategy: when to use free vs paid
+    use_free_for_simple: bool = Field(default=True)  # Use free models for simple tasks
+    cost_threshold: float = Field(default=0.01)  # Switch to free if cost > threshold
 
 
 class CostConfig(BaseModel):
@@ -80,12 +105,31 @@ class Config(BaseModel):
         """Load configuration from environment variables."""
         return cls(
             llm=LLMConfig(
+                # API Keys
                 openai_api_key=os.getenv("OPENAI_API_KEY", ""),
                 anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", ""),
+                groq_api_key=os.getenv("GROQ_API_KEY", ""),
+
+                # Providers
+                default_provider=os.getenv("DEFAULT_PROVIDER", "openai"),
+                advanced_provider=os.getenv("ADVANCED_PROVIDER", "openai"),
+                free_provider=os.getenv("FREE_PROVIDER", "ollama"),
+
+                # Models
                 default_model=os.getenv("DEFAULT_LLM_MODEL", "gpt-4o-mini"),
                 metadata_model=os.getenv("METADATA_LLM_MODEL", "gpt-4o-mini"),
                 cleanup_model=os.getenv("CLEANUP_LLM_MODEL", "gpt-4o-mini"),
                 agent_model=os.getenv("AGENT_LLM_MODEL", "gpt-4o"),
+                free_model=os.getenv("FREE_LLM_MODEL", "llama3.1:8b"),
+                simple_task_model=os.getenv("SIMPLE_TASK_MODEL", "llama3.1:8b"),
+                advanced_model=os.getenv("ADVANCED_LLM_MODEL", "gpt-4o"),
+
+                # Ollama config
+                ollama_base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+
+                # Strategy
+                use_free_for_simple=os.getenv("USE_FREE_FOR_SIMPLE", "true").lower() == "true",
+                cost_threshold=float(os.getenv("COST_THRESHOLD", "0.01")),
             ),
             cost=CostConfig(
                 daily_cost_cap=float(os.getenv("DAILY_COST_CAP", "10.0")),
